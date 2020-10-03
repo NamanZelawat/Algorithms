@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+#define int long long
+#define len(v) ((int)((v).size()))
+#define all(v) (v).begin(), (v).end()
+#define rall(v) (v).rbegin(), (v).rend()
+#define chmax(x, v) x = max((x), (v))
+#define chmin(x, v) x = min((x), (v))
+using namespace std;
+using pii = pair<int, int>;
+
+struct EndSet {
+	set<int> points;
+	pii seg = {1, 0};
+
+	int cbase = 0, cdir = 1;
+
+	void setFree(int mx) {
+		points.clear(), cbase = 0, cdir = 1;
+		seg = {1, mx};
+	}
+
+	void setPush(int x) {
+		setFree(0);
+		points.insert(x);
+	}
+
+	void rotate(int balance) {
+		cbase = balance - cbase;
+		cdir = -cdir;
+		seg = {balance - seg.second, balance - seg.first};
+	}
+
+	int tr(int x) {
+		return cbase + cdir*x;
+	}
+
+	int anti(int x) {
+		return cdir * (x - cbase);
+	}
+
+	bool in(int x) {
+		if (points.count(anti(x)))
+			return true;
+		return (seg.first <= x && x <= seg.second);	
+	}
+
+	void push(int x) {
+		points.insert(anti(x));
+	}
+
+	void popBelow(int x) {
+		seg.second = min(seg.second, x);
+		auto nextIt = [&] {
+			return (cdir == 1 ? prev(points.end()) : points.begin());
+		};
+		while (!points.empty() && tr(*nextIt()) > x)
+			points.erase(nextIt());
+	}
+	
+	bool empty() {
+		return points.empty() && seg.first > seg.second;
+	}
+};
+
+void solve() {
+	int n; cin >> n;
+	EndSet util;
+	int curAns = 0;
+	for (int i = 0; i < n; ++i) {
+		int x; cin >> x;
+		util.popBelow(x-1); 
+		if (x % 2 == 0 && util.in(x/2)) {
+			curAns += 2;
+			util.setPush(x/2);
+		} else if (util.empty()) {
+			if (x % 2 == 0)
+				curAns += 1, util.setPush(x/2);
+			else
+				util.setFree(x-1);
+		} else {
+			curAns += 1;
+			if (x % 2 == 0)
+				util.push(x/2);
+		}
+		util.rotate(x);
+	}	
+	cout << 2*n - curAns << "\n";
+}
+
+signed main() {
+	ios::sync_with_stdio(false), cin.tie(0);
+	int nbTests;
+	cin >> nbTests;
+	for (int iTest = 0; iTest < nbTests; ++iTest) {
+		solve();
+	}
+}
